@@ -21,6 +21,14 @@ namespace Laba4OOP
 
         private void Form1_MouseDown(object sender, MouseEventArgs e)
         {
+			for (int i = 0; i < storage.GetCount(); i++)
+			{
+				if (storage.HaveObject(i))
+				{
+					if (storage.GetObject(i).CheckClickOnCircle(e.X, e.Y))
+						return;
+				}
+			}
 			storage.SetObject(numberOfCircles, new CCircle());
 			storage.GetObject(numberOfCircles).SetCoords(e.X, e.Y);
 			numberOfCircles++;
@@ -32,10 +40,47 @@ namespace Laba4OOP
             {
 				if (storage.HaveObject(i))
 				{
-					storage.GetObject(i).DrawCircle();
+					if(storage.GetObject(i).chosen)
+						storage.GetObject(i).DrawRedCircle();
+					else
+						storage.GetObject(i).DrawCircle();
 				}
 			}
 		}
+
+        private void Form1_MouseUp(object sender, MouseEventArgs e)
+        {
+			for (int i = 0; i < storage.GetCount(); i++)
+			{
+				if (storage.HaveObject(i))
+				{
+					if (Control.ModifierKeys == Keys.Control && e.Button == System.Windows.Forms.MouseButtons.Left)
+					{
+						if (storage.GetObject(i).CheckClickOnCircle(e.X, e.Y))
+							storage.GetObject(i).chosen = true;
+					}
+					else if(e.Button == System.Windows.Forms.MouseButtons.Left)
+						if (storage.HaveObject(i))
+							if (storage.GetObject(i).CheckClickOnCircle(e.X, e.Y))
+								storage.GetObject(i).chosen = true;
+							else
+								storage.GetObject(i).chosen = false;
+				}
+			}
+		}
+
+        private void btnDelete_Click(object sender, EventArgs e)
+        {
+            for (int i = 0; i < storage.GetCount(); i++)
+            {
+				if (storage.HaveObject(i))
+					if (storage.GetObject(i).chosen)
+					{
+                        storage.GetObject(i).DeleteCircle();
+                        storage.DeleteObject(i);
+					}
+			}
+        }
     }
 
     class Storage
@@ -57,6 +102,12 @@ namespace Laba4OOP
 		public void SetObject(int i, Object newObject)
 		{
 			storage[i] = newObject;
+            for (int j = 0; j < storage.Length; j++)
+            {
+				if (storage[j] != null)
+					storage[j].chosen = false;
+            }
+			storage[i].chosen = true;
 		}
 
 		public Object GetObject(int i)
@@ -98,11 +149,25 @@ namespace Laba4OOP
 	//базовый класс
 	class Object
 	{
+		public bool chosen = false;
 		public virtual void SetCoords(int xCoord, int yCoord)
 		{
 			Console.WriteLine("Object");
 		}
 		public virtual void DrawCircle()
+		{
+			Console.WriteLine("Object");
+		}
+		public virtual void DrawRedCircle()
+		{
+			Console.WriteLine("Object");
+		}
+
+		public virtual bool CheckClickOnCircle(int x, int y)
+		{
+			return false;
+		}
+		public virtual void DeleteCircle()
 		{
 			Console.WriteLine("Object");
 		}
@@ -130,6 +195,36 @@ namespace Laba4OOP
 			formGraphics.DrawEllipse(myPen, ellipse);
 			myPen.Dispose();
 			formGraphics.Dispose();
+		}
+
+		public override void DrawRedCircle()
+		{
+			System.Drawing.Pen myPen = new System.Drawing.Pen(System.Drawing.Color.Red);
+			System.Drawing.Graphics formGraphics;
+			formGraphics = Form.ActiveForm.CreateGraphics();
+			Rectangle ellipse = new Rectangle(xCoord, yCoord, circleWidth, circleHeight);
+			formGraphics.DrawEllipse(myPen, ellipse);
+			myPen.Dispose();
+			formGraphics.Dispose();
+		}
+
+		public override void DeleteCircle()
+		{
+			System.Drawing.Pen myPen = new System.Drawing.Pen(System.Drawing.Color.White);
+			System.Drawing.Graphics formGraphics;
+			formGraphics = Form.ActiveForm.CreateGraphics();
+			Rectangle ellipse = new Rectangle(xCoord, yCoord, circleWidth, circleHeight);
+			formGraphics.DrawEllipse(myPen, ellipse);
+			myPen.Dispose();
+			formGraphics.Dispose();
+		}
+
+		public override bool CheckClickOnCircle(int x, int y)
+		{
+			if (((x - circleWidth) < xCoord) && (x + circleWidth > xCoord) && ((y - circleWidth - circleWidth) < yCoord) && (y + circleWidth > yCoord))
+				return true;
+			else
+				return false;
 		}
 	}
 }
