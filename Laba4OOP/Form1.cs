@@ -30,9 +30,9 @@ namespace Laba4OOP
 						return;
 				}
 			}
-			if(comboBox1.SelectedIndex == 0)
+			if(rbCircle.Checked)
 				storage.SetObject(numberOfObjects, new CCircle());
-			else
+			if (rbSquare.Checked)
 				storage.SetObject(numberOfObjects, new CSquare());
 			storage.GetObject(numberOfObjects).SetCoords(e.X, e.Y);
 			numberOfObjects++;
@@ -47,6 +47,8 @@ namespace Laba4OOP
 				{
 					if (storage.GetObject(i).chosen)
 						storage.GetObject(i).DrawRedObject();
+					else if(storage.GetObject(i).colored)
+						storage.GetObject(i).DrawGreenObject();
 					else
 					{
 						storage.GetObject(i).DrawObject();
@@ -95,6 +97,160 @@ namespace Laba4OOP
 					}
 			}
         }
+
+        private void Form1_KeyDown(object sender, KeyEventArgs e)
+        {
+			int object0 = 0;
+
+			for (int i = 0; i < storage.GetCount(); i++)
+			{
+				if (storage.HaveObject(i))
+				{
+					if (storage.GetObject(i).chosen)
+					{
+						object0 = i;
+						break;
+					}
+				}
+			}
+
+			if (e.KeyData == Keys.Q)
+			{
+				for (int i = 0; i < storage.GetCount(); i++)
+				{
+					if (storage.HaveObject(i))
+					{
+						if (i == object0 - 1)
+						{
+							storage.GetObject(i).chosen = true;
+						}
+						else
+							storage.GetObject(i).chosen = false;
+					}
+				}
+				Invalidate();
+			}
+
+			if (e.KeyData == Keys.E)
+			{
+				for (int i = 0; i < storage.GetCount(); i++)
+				{
+					if (storage.HaveObject(i))
+					{
+						if (i == object0 + 1)
+						{
+							storage.GetObject(i).chosen = true;
+						}
+						else
+							storage.GetObject(i).chosen = false;
+					}
+				}
+				Invalidate();
+			}
+
+			if (e.KeyData == Keys.C)
+			{
+				for (int i = 0; i < storage.GetCount(); i++)
+				{
+					if(storage.HaveObject(i))
+						if (storage.GetObject(i).chosen)
+						{
+							if (rbGreen.Checked)
+							{
+								storage.GetObject(i).colored = true;
+								storage.GetObject(i).chosen = false;
+							}
+						}
+				}
+				Invalidate();
+			}
+
+			if (e.KeyData == Keys.X)
+			{
+				for (int i = 0; i < storage.GetCount(); i++)
+				{
+					if (storage.HaveObject(i))
+						if (storage.GetObject(i).chosen)
+						{
+							storage.GetObject(i).size++;
+						}
+				}
+				Invalidate();
+			}
+
+			if (e.KeyData == Keys.Z)
+			{
+				for (int i = 0; i < storage.GetCount(); i++)
+				{
+					if (storage.HaveObject(i))
+						if (storage.GetObject(i).chosen)
+						{
+							storage.GetObject(i).size--;
+						}
+				}
+				Invalidate();
+			}
+
+			if (e.KeyData == Keys.A)
+			{
+				for (int i = 0; i < storage.GetCount(); i++)
+				{
+					if (storage.HaveObject(i))
+						if (storage.GetObject(i).chosen)
+						{
+							if (storage.GetObject(i).xCoord <= 1)
+								storage.GetObject(i).xCoord = 1;
+							storage.GetObject(i).xCoord--;
+						}
+				}
+				Invalidate();
+			}
+
+			if (e.KeyData == Keys.D)
+			{
+				for (int i = 0; i < storage.GetCount(); i++)
+				{
+					if (storage.HaveObject(i))
+						if (storage.GetObject(i).chosen)
+						{
+							if (storage.GetObject(i).xCoord >= this.ClientSize.Width - storage.GetObject(i).size - 2)
+								storage.GetObject(i).xCoord = this.ClientSize.Width - storage.GetObject(i).size - 2;
+							storage.GetObject(i).xCoord++;
+						}
+				}
+				Invalidate();
+			}
+
+			if (e.KeyData == Keys.W)
+			{
+				for (int i = 0; i < storage.GetCount(); i++)
+				{
+					if (storage.HaveObject(i))
+						if (storage.GetObject(i).chosen)
+						{
+							if (storage.GetObject(i).yCoord <= 1)
+								storage.GetObject(i).yCoord = 1;
+							storage.GetObject(i).yCoord--;
+						}
+				}
+				Invalidate();
+			}
+
+			if (e.KeyData == Keys.S)
+			{
+				for (int i = 0; i < storage.GetCount(); i++)
+				{
+					if (storage.HaveObject(i))
+						if (storage.GetObject(i).chosen)
+						{
+							if (storage.GetObject(i).yCoord >= this.ClientSize.Height - storage.GetObject(i).size - 2)
+								storage.GetObject(i).yCoord = this.ClientSize.Height - storage.GetObject(i).size - 2;
+							storage.GetObject(i).yCoord++;
+						}
+				}
+				Invalidate();
+			}
+		}
     }
 
     class Storage
@@ -171,12 +327,15 @@ namespace Laba4OOP
 	//базовый класс
 	class Object
 	{
-		protected int xCoord;
-		protected int yCoord;
-		protected int size = 30;
+		public int xCoord;
+		public int yCoord;
+		public int size = 30;
 
 		//метка выделенности
 		public bool chosen = false;
+
+		//метка окрашенности
+		public bool colored = false;
 
 		//номер объекта
 		public int numberOfObject = 0;
@@ -196,6 +355,10 @@ namespace Laba4OOP
 
 		//нарисовать красный объект
 		public virtual void DrawRedObject()
+		{
+			Console.WriteLine("Object");
+		}
+		public virtual void DrawGreenObject()
 		{
 			Console.WriteLine("Object");
 		}
@@ -276,6 +439,19 @@ namespace Laba4OOP
 			formGraphics.Dispose();
 		}
 
+		public override void DrawGreenObject()
+		{
+			System.Drawing.Pen myPen = new System.Drawing.Pen(System.Drawing.Color.Green);
+			System.Drawing.Graphics formGraphics;
+			formGraphics = Form.ActiveForm.CreateGraphics();
+			Rectangle ellipse = new Rectangle(xCoord, yCoord, size, size);
+			formGraphics.DrawEllipse(myPen, ellipse);
+			DrawNumber(this.numberOfObject);
+
+			myPen.Dispose();
+			formGraphics.Dispose();
+		}
+
 		public override void DeleteObject()
 		{
 			System.Drawing.Pen myPen = new System.Drawing.Pen(System.Drawing.Color.White);
@@ -310,6 +486,18 @@ namespace Laba4OOP
 		public override void DrawRedObject()
 		{
 			System.Drawing.Pen myPen = new System.Drawing.Pen(System.Drawing.Color.Red);
+			System.Drawing.Graphics formGraphics;
+			formGraphics = Form.ActiveForm.CreateGraphics();
+			Rectangle rtg = new Rectangle(xCoord, yCoord, size, size);
+			formGraphics.DrawRectangle(myPen, rtg);
+			DrawNumber(this.numberOfObject);
+
+			myPen.Dispose();
+			formGraphics.Dispose();
+		}
+		public override void DrawGreenObject()
+		{
+			System.Drawing.Pen myPen = new System.Drawing.Pen(System.Drawing.Color.Green);
 			System.Drawing.Graphics formGraphics;
 			formGraphics = Form.ActiveForm.CreateGraphics();
 			Rectangle rtg = new Rectangle(xCoord, yCoord, size, size);
