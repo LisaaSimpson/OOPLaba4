@@ -12,8 +12,9 @@ namespace Laba4OOP
 {
     public partial class Form1 : Form
     {
+		//хранилище объектов
 		Storage storage = new Storage(30);
-		int numberOfCircles = 0;
+		int numberOfObjects = 0;
         public Form1()
         {
             InitializeComponent();
@@ -25,13 +26,17 @@ namespace Laba4OOP
 			{
 				if (storage.HaveObject(i))
 				{
-					if (storage.GetObject(i).CheckClickOnCircle(e.X, e.Y))
+					if (storage.GetObject(i).CheckClickOnObject(e.X, e.Y))
 						return;
 				}
 			}
-			storage.SetObject(numberOfCircles, new CCircle());
-			storage.GetObject(numberOfCircles).SetCoords(e.X, e.Y);
-			numberOfCircles++;
+			if(comboBox1.SelectedIndex == 0)
+				storage.SetObject(numberOfObjects, new CCircle());
+			else
+				storage.SetObject(numberOfObjects, new CSquare());
+			storage.GetObject(numberOfObjects).SetCoords(e.X, e.Y);
+			numberOfObjects++;
+			Invalidate();
         }
 
         private void Form1_Paint(object sender, PaintEventArgs e)
@@ -40,10 +45,12 @@ namespace Laba4OOP
             {
 				if (storage.HaveObject(i))
 				{
-					if(storage.GetObject(i).chosen)
-						storage.GetObject(i).DrawRedCircle();
+					if (storage.GetObject(i).chosen)
+						storage.GetObject(i).DrawRedObject();
 					else
-						storage.GetObject(i).DrawCircle();
+					{
+						storage.GetObject(i).DrawObject();
+					}
 				}
 			}
 		}
@@ -56,15 +63,21 @@ namespace Laba4OOP
 				{
 					if (Control.ModifierKeys == Keys.Control && e.Button == System.Windows.Forms.MouseButtons.Left)
 					{
-						if (storage.GetObject(i).CheckClickOnCircle(e.X, e.Y))
+						if (storage.GetObject(i).CheckClickOnObject(e.X, e.Y))
+						{
 							storage.GetObject(i).chosen = true;
+							Invalidate();
+						}
 					}
-					else if(e.Button == System.Windows.Forms.MouseButtons.Left)
+					else if (e.Button == System.Windows.Forms.MouseButtons.Left)
 						if (storage.HaveObject(i))
-							if (storage.GetObject(i).CheckClickOnCircle(e.X, e.Y))
+						{
+							if (storage.GetObject(i).CheckClickOnObject(e.X, e.Y))
 								storage.GetObject(i).chosen = true;
 							else
 								storage.GetObject(i).chosen = false;
+							Invalidate();
+						}
 				}
 			}
 		}
@@ -76,8 +89,9 @@ namespace Laba4OOP
 				if (storage.HaveObject(i))
 					if (storage.GetObject(i).chosen)
 					{
-                        storage.GetObject(i).DeleteCircle();
+                        storage.GetObject(i).DeleteObject();
                         storage.DeleteObject(i);
+						Invalidate();
 					}
 			}
         }
@@ -93,15 +107,18 @@ namespace Laba4OOP
 			size = 0;
 		}
 
+		//конструктор
 		public Storage(int size)
 		{
 			this.size = size;
 			storage = new Object[size];
 		}
 
+		//добавить объект к хранилище
 		public void SetObject(int i, Object newObject)
 		{
 			storage[i] = newObject;
+			storage[i].numberOfObject = i;
             for (int j = 0; j < storage.Length; j++)
             {
 				if (storage[j] != null)
@@ -110,21 +127,25 @@ namespace Laba4OOP
 			storage[i].chosen = true;
 		}
 
+		//ссылка на объект хранилище
 		public Object GetObject(int i)
 		{
 			return storage[i];
 		}
 
+		//количество объектов в хранилище
 		public int GetCount()
 		{
 			return size;
 		}
 
+		//удалить объект из хранилища 
 		public void DeleteObject(int i)
 		{
 			storage[i] = null;
 		}
 
+		//полностью удалить объект
 		public void DestroyObject(int i)
 		{
 			if (size != 0)
@@ -133,6 +154,7 @@ namespace Laba4OOP
 			}
 		}
 
+		//проверка на наличие объекта в хранилище
 		public bool HaveObject(int i)
 		{
 			if (storage[i] != null)
@@ -149,82 +171,166 @@ namespace Laba4OOP
 	//базовый класс
 	class Object
 	{
+		protected int xCoord;
+		protected int yCoord;
+		protected int size = 30;
+
+		//метка выделенности
 		public bool chosen = false;
-		public virtual void SetCoords(int xCoord, int yCoord)
+
+		//номер объекта
+		public int numberOfObject = 0;
+
+		//задать координаты
+		public void SetCoords(int xCoord, int yCoord)
 		{
-			Console.WriteLine("Object");
+			this.xCoord = xCoord;
+			this.yCoord = yCoord;
 		}
-		public virtual void DrawCircle()
-		{
-			Console.WriteLine("Object");
-		}
-		public virtual void DrawRedCircle()
+
+		//нарисовать черный объект
+		public virtual void DrawObject()
 		{
 			Console.WriteLine("Object");
 		}
 
-		public virtual bool CheckClickOnCircle(int x, int y)
-		{
-			return false;
-		}
-		public virtual void DeleteCircle()
+		//нарисовать красный объект
+		public virtual void DrawRedObject()
 		{
 			Console.WriteLine("Object");
+		}
+
+		//проверка на нажатие на объекта
+		public bool CheckClickOnObject(int x, int y)
+		{
+			if (((x - size) < xCoord) && (x + size > xCoord) && ((y - size - size) < yCoord) && (y + size > yCoord))
+				return true;
+			else
+				return false;
+		}
+
+		//удаление объекта из формы
+		public virtual void DeleteObject()
+		{
+			Console.WriteLine("Object");
+		}
+
+		//рисование номера объекта
+		public void DrawNumber(int numberOfCircle)
+		{
+			System.Drawing.Graphics formGraphics;
+			formGraphics = Form.ActiveForm.CreateGraphics();
+			string drawString = numberOfCircle.ToString();
+			System.Drawing.Font drawFont = new System.Drawing.Font("Arial", 14);
+			System.Drawing.SolidBrush drawBrush = new System.Drawing.SolidBrush(System.Drawing.Color.Black);
+			System.Drawing.StringFormat drawFormat = new System.Drawing.StringFormat();
+			formGraphics.DrawString(drawString, drawFont, drawBrush, xCoord - size / 2, yCoord - size / 2, drawFormat);
+			drawFont.Dispose();
+			drawBrush.Dispose();
+			formGraphics.Dispose();
+		}
+
+		//удаление номера объекта
+		public void DeleteNumber(int numberOfCircle)
+		{
+			System.Drawing.Graphics formGraphics;
+			formGraphics = Form.ActiveForm.CreateGraphics();
+			string drawString = numberOfCircle.ToString();
+			System.Drawing.Font drawFont = new System.Drawing.Font("Arial", 14);
+			System.Drawing.SolidBrush drawBrush = new System.Drawing.SolidBrush(System.Drawing.Color.White);
+			System.Drawing.StringFormat drawFormat = new System.Drawing.StringFormat();
+			formGraphics.DrawString(drawString, drawFont, drawBrush, xCoord - size / 2, yCoord - size / 2, drawFormat);
+			drawFont.Dispose();
+			drawBrush.Dispose();
+			formGraphics.Dispose();
 		}
 	}
 
 	class CCircle : Object
 	{
-		private int xCoord;
-		private int yCoord;
-        private int circleWidth = 30;
-        private int circleHeight = 30;
 
-        public override void SetCoords(int xCoord, int yCoord)
+		public override void DrawObject()
         {
-			this.xCoord = xCoord;
-			this.yCoord = yCoord;
-        }
-
-		public override void DrawCircle()
-        {
+			//рисование круга
 			System.Drawing.Pen myPen = new System.Drawing.Pen(System.Drawing.Color.Black);
 			System.Drawing.Graphics formGraphics;
 			formGraphics = Form.ActiveForm.CreateGraphics();
-			Rectangle ellipse = new Rectangle(xCoord, yCoord, circleWidth, circleHeight);
+			Rectangle ellipse = new Rectangle(xCoord, yCoord, size, size);
 			formGraphics.DrawEllipse(myPen, ellipse);
+			DrawNumber(this.numberOfObject);
+
 			myPen.Dispose();
 			formGraphics.Dispose();
 		}
 
-		public override void DrawRedCircle()
+		public override void DrawRedObject()
 		{
 			System.Drawing.Pen myPen = new System.Drawing.Pen(System.Drawing.Color.Red);
 			System.Drawing.Graphics formGraphics;
 			formGraphics = Form.ActiveForm.CreateGraphics();
-			Rectangle ellipse = new Rectangle(xCoord, yCoord, circleWidth, circleHeight);
+			Rectangle ellipse = new Rectangle(xCoord, yCoord, size, size);
 			formGraphics.DrawEllipse(myPen, ellipse);
+			DrawNumber(this.numberOfObject);
+
 			myPen.Dispose();
 			formGraphics.Dispose();
 		}
 
-		public override void DeleteCircle()
+		public override void DeleteObject()
 		{
 			System.Drawing.Pen myPen = new System.Drawing.Pen(System.Drawing.Color.White);
 			System.Drawing.Graphics formGraphics;
 			formGraphics = Form.ActiveForm.CreateGraphics();
-			Rectangle ellipse = new Rectangle(xCoord, yCoord, circleWidth, circleHeight);
+			Rectangle ellipse = new Rectangle(xCoord, yCoord, size, size);
 			formGraphics.DrawEllipse(myPen, ellipse);
+			DeleteNumber(this.numberOfObject);
+
+			myPen.Dispose();
+			formGraphics.Dispose();
+		}
+	}
+
+	class CSquare : Object
+	{
+
+		public override void DrawObject()
+		{
+			//рисование квадрата
+			System.Drawing.Pen myPen = new System.Drawing.Pen(System.Drawing.Color.Black);
+			System.Drawing.Graphics formGraphics;
+			formGraphics = Form.ActiveForm.CreateGraphics();
+			Rectangle rtg = new Rectangle(xCoord, yCoord, size, size);
+			formGraphics.DrawRectangle(myPen, rtg);
+			DrawNumber(this.numberOfObject);
+
 			myPen.Dispose();
 			formGraphics.Dispose();
 		}
 
-		public override bool CheckClickOnCircle(int x, int y)
+		public override void DrawRedObject()
 		{
-			if (((x - circleWidth) < xCoord) && (x + circleWidth > xCoord) && ((y - circleWidth - circleWidth) < yCoord) && (y + circleWidth > yCoord))
-				return true;
-			else
-				return false;
+			System.Drawing.Pen myPen = new System.Drawing.Pen(System.Drawing.Color.Red);
+			System.Drawing.Graphics formGraphics;
+			formGraphics = Form.ActiveForm.CreateGraphics();
+			Rectangle rtg = new Rectangle(xCoord, yCoord, size, size);
+			formGraphics.DrawRectangle(myPen, rtg);
+			DrawNumber(this.numberOfObject);
+
+			myPen.Dispose();
+			formGraphics.Dispose();
+		}
+
+		public override void DeleteObject()
+		{
+			System.Drawing.Pen myPen = new System.Drawing.Pen(System.Drawing.Color.White);
+			System.Drawing.Graphics formGraphics;
+			formGraphics = Form.ActiveForm.CreateGraphics();
+			Rectangle rtg = new Rectangle(xCoord, yCoord, size, size);
+			formGraphics.DrawRectangle(myPen, rtg);
+			DeleteNumber(this.numberOfObject);
+
+			myPen.Dispose();
+			formGraphics.Dispose();
 		}
 	}
 }
