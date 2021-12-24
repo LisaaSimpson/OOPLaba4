@@ -13,8 +13,11 @@ namespace Laba4OOP
     public partial class Form1 : Form
     {
 		//хранилище объектов
-		Storage storage = new Storage(30);
+		Storage storage = new Storage(40);
+		List<Group> groupList = new List<Group>();
+
 		int numberOfObjects = 0;
+		int numberOfEveryObject = 0;
         public Form1()
         {
             InitializeComponent();
@@ -24,6 +27,7 @@ namespace Laba4OOP
         {
 			for (int i = 0; i < storage.GetCount(); i++)
 			{
+				//проверка на нажатие по фигуре
 				if (storage.HaveObject(i))
 				{
 					if (storage.GetObject(i).CheckClickOnObject(e.X, e.Y))
@@ -31,29 +35,31 @@ namespace Laba4OOP
 				}
 			}
 			if(rbCircle.Checked)
-				storage.SetObject(numberOfObjects, new CCircle());
+				storage.SetObject(numberOfObjects, new CCircle(), numberOfEveryObject);
 			if (rbSquare.Checked)
-				storage.SetObject(numberOfObjects, new CSquare());
+				storage.SetObject(numberOfObjects, new CSquare(), numberOfEveryObject);
 			storage.GetObject(numberOfObjects).SetCoords(e.X, e.Y);
 			numberOfObjects++;
+			numberOfEveryObject++;
 			Invalidate();
         }
 
         private void Form1_Paint(object sender, PaintEventArgs e)
 		{
+
 			for (int i = 0; i < storage.GetCount(); i++)
             {
 				if (storage.HaveObject(i))
 				{
-					if (storage.GetObject(i).chosen)
-						storage.GetObject(i).DrawRedObject();
-					else if(storage.GetObject(i).colored)
-						storage.GetObject(i).DrawGreenObject();
-					else
-					{
-						storage.GetObject(i).DrawObject();
-					}
-				}
+                    if (storage.GetObject(i).CheckChosen())
+                        storage.GetObject(i).DrawRedObject();
+                    else if (storage.GetObject(i).colored)
+                        storage.GetObject(i).DrawGreenObject();
+                    else
+                    {
+                        storage.GetObject(i).DrawObject();
+                    }
+                }
 			}
 		}
 
@@ -65,21 +71,15 @@ namespace Laba4OOP
 				{
 					if (Control.ModifierKeys == Keys.Control && e.Button == System.Windows.Forms.MouseButtons.Left)
 					{
-						if (storage.GetObject(i).CheckClickOnObject(e.X, e.Y))
-						{
-							storage.GetObject(i).chosen = true;
-							Invalidate();
-						}
+						storage.GetObject(i).CheckChangeChosen(e.X, e.Y);
+						Invalidate();
 					}
 					else if (e.Button == System.Windows.Forms.MouseButtons.Left)
-						if (storage.HaveObject(i))
-						{
-							if (storage.GetObject(i).CheckClickOnObject(e.X, e.Y))
-								storage.GetObject(i).chosen = true;
-							else
-								storage.GetObject(i).chosen = false;
-							Invalidate();
-						}
+					{
+						storage.GetObject(i).CheckChangeUnchosen();
+						storage.GetObject(i).CheckChangeChosen(e.X, e.Y);
+					}
+					Invalidate();
 				}
 			}
 		}
@@ -89,7 +89,7 @@ namespace Laba4OOP
             for (int i = 0; i < storage.GetCount(); i++)
             {
 				if (storage.HaveObject(i))
-					if (storage.GetObject(i).chosen)
+					if (storage.GetObject(i).CheckChosen())
 					{
                         storage.GetObject(i).DeleteObject();
                         storage.DeleteObject(i);
@@ -106,7 +106,7 @@ namespace Laba4OOP
 			{
 				if (storage.HaveObject(i))
 				{
-					if (storage.GetObject(i).chosen)
+					if (storage.GetObject(i).CheckChosen())
 					{
 						object0 = i;
 						break;
@@ -125,7 +125,7 @@ namespace Laba4OOP
 							storage.GetObject(i).chosen = true;
 						}
 						else
-							storage.GetObject(i).chosen = false;
+							storage.GetObject(i).CheckChangeUnchosen();
 					}
 				}
 				Invalidate();
@@ -142,7 +142,7 @@ namespace Laba4OOP
 							storage.GetObject(i).chosen = true;
 						}
 						else
-							storage.GetObject(i).chosen = false;
+							storage.GetObject(i).CheckChangeUnchosen();
 					}
 				}
 				Invalidate();
@@ -153,12 +153,12 @@ namespace Laba4OOP
 				for (int i = 0; i < storage.GetCount(); i++)
 				{
 					if(storage.HaveObject(i))
-						if (storage.GetObject(i).chosen)
+						if (storage.GetObject(i).CheckChosen())
 						{
 							if (rbGreen.Checked)
 							{
 								storage.GetObject(i).colored = true;
-								storage.GetObject(i).chosen = false;
+								storage.GetObject(i).CheckChangeUnchosen();
 							}
 						}
 				}
@@ -170,9 +170,9 @@ namespace Laba4OOP
 				for (int i = 0; i < storage.GetCount(); i++)
 				{
 					if (storage.HaveObject(i))
-						if (storage.GetObject(i).chosen)
+						if (storage.GetObject(i).CheckChosen())
 						{
-							storage.GetObject(i).size++;
+							storage.GetObject(i).SizeUpObject();
 						}
 				}
 				Invalidate();
@@ -183,9 +183,9 @@ namespace Laba4OOP
 				for (int i = 0; i < storage.GetCount(); i++)
 				{
 					if (storage.HaveObject(i))
-						if (storage.GetObject(i).chosen)
+						if (storage.GetObject(i).CheckChosen())
 						{
-							storage.GetObject(i).size--;
+							storage.GetObject(i).SizeDownObject();
 						}
 				}
 				Invalidate();
@@ -196,11 +196,9 @@ namespace Laba4OOP
 				for (int i = 0; i < storage.GetCount(); i++)
 				{
 					if (storage.HaveObject(i))
-						if (storage.GetObject(i).chosen)
+						if (storage.GetObject(i).CheckChosen())
 						{
-							if (storage.GetObject(i).xCoord <= 1)
-								storage.GetObject(i).xCoord = 1;
-							storage.GetObject(i).xCoord--;
+							storage.GetObject(i).LeftObject();
 						}
 				}
 				Invalidate();
@@ -211,11 +209,9 @@ namespace Laba4OOP
 				for (int i = 0; i < storage.GetCount(); i++)
 				{
 					if (storage.HaveObject(i))
-						if (storage.GetObject(i).chosen)
+						if (storage.GetObject(i).CheckChosen())
 						{
-							if (storage.GetObject(i).xCoord >= this.ClientSize.Width - storage.GetObject(i).size - 2)
-								storage.GetObject(i).xCoord = this.ClientSize.Width - storage.GetObject(i).size - 2;
-							storage.GetObject(i).xCoord++;
+							storage.GetObject(i).RightObject();
 						}
 				}
 				Invalidate();
@@ -226,11 +222,9 @@ namespace Laba4OOP
 				for (int i = 0; i < storage.GetCount(); i++)
 				{
 					if (storage.HaveObject(i))
-						if (storage.GetObject(i).chosen)
+						if (storage.GetObject(i).CheckChosen())
 						{
-							if (storage.GetObject(i).yCoord <= 1)
-								storage.GetObject(i).yCoord = 1;
-							storage.GetObject(i).yCoord--;
+							storage.GetObject(i).DownObject();
 						}
 				}
 				Invalidate();
@@ -241,16 +235,89 @@ namespace Laba4OOP
 				for (int i = 0; i < storage.GetCount(); i++)
 				{
 					if (storage.HaveObject(i))
-						if (storage.GetObject(i).chosen)
+						if (storage.GetObject(i).CheckChosen())
 						{
-							if (storage.GetObject(i).yCoord >= this.ClientSize.Height - storage.GetObject(i).size - 2)
-								storage.GetObject(i).yCoord = this.ClientSize.Height - storage.GetObject(i).size - 2;
-							storage.GetObject(i).yCoord++;
+							storage.GetObject(i).UpObject();
+						}
+				}
+				Invalidate();
+			}
+
+			if (e.KeyData == Keys.Delete)
+			{
+				for (int i = 0; i < storage.GetCount(); i++)
+				{
+					if (storage.HaveObject(i))
+						if (storage.GetObject(i).CheckChosen())
+						{
+							storage.DeleteObject(i);
 						}
 				}
 				Invalidate();
 			}
 		}
+
+        private void btnGroup_Click(object sender, EventArgs e)
+        {
+			int chosenObjects = 0;
+            for (int i = 0; i < storage.GetCount(); i++)
+            {
+				if (storage.HaveObject(i) && storage.GetObject(i).CheckChosen())
+					chosenObjects++;
+			}
+			groupList.Add(new Group());
+			for (int i = 0; i < storage.GetCount(); i++)
+            {
+				if(storage.HaveObject(i) && storage.GetObject(i).CheckChosen())
+                {
+					if(storage.GetObject(i) is Group) { 
+                        for (int j = 0; j < groupList[storage.GetObject(i).numberInGroupList].GetLengthOfGroup(); j++)
+                        {
+							groupList[groupList.Count - 1].addObject(groupList[storage.GetObject(i).numberInGroupList].GetObject(j));
+							groupList[groupList.Count - 1].numberInGroupList = groupList.Count - 1;
+						
+						}
+						for (int j = 0; j < groupList[storage.GetObject(i).numberInGroupList].GetLengthOfGroup(); j++)
+                        {
+							groupList[groupList.Count - 1].GetObject(j).numberInGroupList = groupList.Count - 1;
+						}
+					}
+					else 
+					{
+						groupList[groupList.Count - 1].addObject(storage.GetObject(i));
+						for (int j = 0; j < groupList[storage.GetObject(i).numberInGroupList].GetLengthOfGroup(); j++)
+                        {
+							groupList[groupList.Count - 1].numberInGroupList = groupList.Count - 1;
+							groupList[groupList.Count - 1].GetObject(j).numberInGroupList = groupList.Count - 1;
+						}
+					}
+					storage.DeleteObject(i);
+                }
+			}
+			storage.SetObject(numberOfObjects, groupList[groupList.Count - 1], numberOfEveryObject);
+			numberOfObjects++;
+			Invalidate();
+		}
+
+        private void btnUngroup_Click(object sender, EventArgs e)
+        {
+			int numberOfGroup = 0;
+
+            for (int i = 0; i < groupList.Count; i++)
+            {
+				if (groupList[i].CheckChosen()) {
+					numberOfGroup = i;
+				}
+            }
+
+            for (int i = 0; i < groupList[numberOfGroup].GetLengthOfGroup(); i++)
+            {
+				storage.SetObject(numberOfObjects, groupList[numberOfGroup].GetObject(i), groupList[numberOfGroup].GetObject(i).numberOfObject);
+				numberOfObjects++;
+			}
+			groupList[numberOfGroup].DeleteGroup();
+			Invalidate();
+        }
     }
 
     class Storage
@@ -271,10 +338,10 @@ namespace Laba4OOP
 		}
 
 		//добавить объект к хранилище
-		public void SetObject(int i, Object newObject)
+		public void SetObject(int i, Object newObject, int numberOfEveryObject)
 		{
 			storage[i] = newObject;
-			storage[i].numberOfObject = i;
+			storage[i].numberOfObject = numberOfEveryObject;
             for (int j = 0; j < storage.Length; j++)
             {
 				if (storage[j] != null)
@@ -324,12 +391,193 @@ namespace Laba4OOP
 		}
 	}
 
+	//класс группировки для паттерна Composite
+	class Group : Object
+	{
+		Color color;
+		Random rand = new Random();
+
+		public Group()
+        {
+			color = Color.FromArgb(rand.Next(256), rand.Next(256), rand.Next(256));
+		}
+
+		private List<Object> groupObj = new List<Object>();
+
+		public int GetLengthOfGroup()
+        {
+			return groupObj.Count;
+        }
+
+		public void DeleteObject(Object obj)
+		{
+			groupObj.Remove(obj);
+		}
+
+		public void addObject(Object obj)
+        {
+			numberInGroupList = obj.numberInGroupList;
+			groupObj.Add(obj);
+			obj.chosen = false;
+		}
+		
+		//рисование круга
+		public override void DrawObject()
+        {
+			foreach(Object obj in groupObj) 
+			{ 
+				System.Drawing.Pen myPen = new System.Drawing.Pen(System.Drawing.Color.FromArgb(color.ToArgb()));
+				System.Drawing.Graphics formGraphics;
+				formGraphics = Form.ActiveForm.CreateGraphics();
+				if (obj is CCircle)
+				{
+					Rectangle ellipse = new Rectangle(obj.xCoord, obj.yCoord, obj.size, obj.size);
+					formGraphics.DrawEllipse(myPen, ellipse);
+				}
+                else
+                {
+					Rectangle rtg = new Rectangle(obj.xCoord, obj.yCoord, obj.size, obj.size);
+					formGraphics.DrawRectangle(myPen, rtg);
+				}
+				obj.DrawNumber(obj.numberOfObject);
+					
+				myPen.Dispose();
+				formGraphics.Dispose();
+			}
+        }
+
+		public override void DrawRedObject()
+		{
+			foreach (Object obj in groupObj)
+			{
+				obj.DrawRedObject();
+			}
+		}
+
+		public override void DrawGreenObject()
+		{
+			foreach (Object obj in groupObj)
+			{
+				obj.DrawGreenObject();
+			}
+		}
+
+		public override bool CheckClickOnObject(int x, int y)
+        {
+            foreach (Object obj in groupObj)
+            {
+				if (obj.CheckClickOnObject(x, y))
+					return true;
+            }
+			return false;
+		}
+
+		public override void CheckChangeChosen(int x, int y)
+        {
+			foreach (Object obj in groupObj)
+			{
+				if (obj.CheckClickOnObject(x, y))
+					foreach (Object obj2 in groupObj)
+					{
+						obj2.chosen = true;
+					}
+			}
+		}
+
+		public override bool CheckChosen()
+		{
+			foreach (Object obj in groupObj)
+			{
+				if (obj.CheckChosen())
+					return true;
+			}
+
+			return false;
+		}
+
+		public override void CheckChangeUnchosen()
+		{
+			foreach (Object obj in groupObj)
+			{
+				obj.CheckChangeUnchosen();
+			}
+		}
+
+		public override void UpObject()
+		{
+			foreach (Object obj in groupObj)
+			{
+				obj.UpObject();
+			}
+		}
+
+		public override void DownObject()
+		{
+			foreach (Object obj in groupObj)
+			{
+				obj.DownObject();
+			}
+		}
+
+		public override void RightObject()
+		{
+			foreach (Object obj in groupObj)
+			{
+				obj.RightObject();
+			}
+		}
+
+		public override void LeftObject()
+		{
+			foreach (Object obj in groupObj)
+			{
+				obj.LeftObject();
+			}
+		}
+		public override void SizeUpObject()
+		{
+			foreach (Object obj in groupObj)
+			{
+				obj.SizeUpObject();
+			}
+		}
+
+		public Object GetObject(int i)
+        {
+			return groupObj[i];
+        }
+
+		public override void SizeDownObject()
+		{
+			foreach (Object obj in groupObj)
+			{
+				obj.SizeDownObject();
+			}
+		}
+
+		public void DeleteGroup()
+        {
+			groupObj.Clear();
+		}
+
+		//удаление объекта из формы
+		public override void DeleteObject()
+		{
+            foreach (Object obj in groupObj)
+            {
+				obj.DeleteObject();
+            }
+			DeleteGroup();
+		}
+	}
+
 	//базовый класс
 	class Object
 	{
 		public int xCoord;
 		public int yCoord;
 		public int size = 30;
+		public int numberInGroupList;
 
 		//метка выделенности
 		public bool chosen = false;
@@ -363,13 +611,32 @@ namespace Laba4OOP
 			Console.WriteLine("Object");
 		}
 
+		public virtual bool CheckChosen()
+        {
+			if (chosen)
+				return true;
+			else
+				return false;
+        }
+
 		//проверка на нажатие на объекта
-		public bool CheckClickOnObject(int x, int y)
+		public virtual bool CheckClickOnObject(int x, int y)
 		{
 			if (((x - size) < xCoord) && (x + size > xCoord) && ((y - size - size) < yCoord) && (y + size > yCoord))
 				return true;
 			else
 				return false;
+		}
+
+		public virtual void CheckChangeChosen(int x, int y)
+        {
+			if(CheckClickOnObject(x, y))
+				chosen = true;
+        }
+
+		public virtual void CheckChangeUnchosen()
+		{
+			chosen = false;
 		}
 
 		//удаление объекта из формы
@@ -406,6 +673,44 @@ namespace Laba4OOP
 			drawFont.Dispose();
 			drawBrush.Dispose();
 			formGraphics.Dispose();
+		}
+
+		public virtual void UpObject()
+        {
+			if (yCoord >= Form.ActiveForm.ClientSize.Height - size - 2)
+				yCoord = Form.ActiveForm.ClientSize.Height - size - 2;
+			yCoord++;
+        }
+
+		public virtual void DownObject()
+        {
+			if (yCoord <= 1)
+				yCoord = 1;
+			yCoord--;
+        }
+
+		public virtual void RightObject()
+        {
+			if (xCoord >= Form.ActiveForm.ClientSize.Width - size - 2)
+				xCoord = Form.ActiveForm.ClientSize.Width - size - 2;
+			xCoord++;
+        }
+
+		public virtual void LeftObject()
+        {
+			if (xCoord <= 1)
+				xCoord = 1;
+			xCoord--;
+        }
+
+		public virtual void SizeUpObject()
+		{
+			size++;
+		}
+
+		public virtual void SizeDownObject()
+		{
+			size--;
 		}
 	}
 
@@ -454,6 +759,7 @@ namespace Laba4OOP
 
 		public override void DeleteObject()
 		{
+			chosen = false;
 			System.Drawing.Pen myPen = new System.Drawing.Pen(System.Drawing.Color.White);
 			System.Drawing.Graphics formGraphics;
 			formGraphics = Form.ActiveForm.CreateGraphics();
@@ -510,6 +816,7 @@ namespace Laba4OOP
 
 		public override void DeleteObject()
 		{
+			chosen = false;
 			System.Drawing.Pen myPen = new System.Drawing.Pen(System.Drawing.Color.White);
 			System.Drawing.Graphics formGraphics;
 			formGraphics = Form.ActiveForm.CreateGraphics();
