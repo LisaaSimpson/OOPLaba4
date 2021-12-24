@@ -25,14 +25,16 @@ namespace Laba4OOP
         }
 
         private void Form1_MouseDown(object sender, MouseEventArgs e)
-        {
+		{
 			for (int i = 0; i < storage.GetCount(); i++)
 			{
 				//проверка на нажатие по фигуре
 				if (storage.HaveObject(i))
 				{
 					if (storage.GetObject(i).CheckClickOnObject(e.X, e.Y))
+					{
 						return;
+					}
 				}
 			}
 			if(rbCircle.Checked)
@@ -43,9 +45,52 @@ namespace Laba4OOP
 			numberOfObjects++;
 			numberOfEveryObject++;
 			Invalidate();
-        }
+			storage.observers.Invoke(this, null);
+		}
+		public void UpdateFromStorage(object sender, EventArgs e)
+		{
+			treeView1.Nodes.Clear();
 
-        private void Form1_Paint(object sender, PaintEventArgs e)
+			for (int i = 0; i < storage.GetCount(); i++)
+			{
+				TreeNode n = new TreeNode();
+				if (storage.getObjectFromindex(i) != null)
+				{
+					treeView1.Nodes.Add(ObjectToNode(storage.getObjectFromindex(i), n, i));
+				}
+			}
+			Invalidate();
+		}
+
+		TreeNode ObjectToNode(Object obj, TreeNode t, int i)
+		{
+			int k = 0;
+			if (obj.chosen) 
+				t.Checked = true;
+			TreeNode n;
+			if (obj is Group)
+			{
+				t.Text = i + " " + obj.Otostring();
+				if (obj.chosen)
+					t.Checked = true;
+
+				for (int j = 0; j < obj.GetLengthOfGroup(); j++)
+				{
+					if (obj.GetObject(j) != null)
+					{
+						n = new TreeNode();
+						k = t.Nodes.Add(ObjectToNode(obj.GetObject(j), n, i * 100 + k));
+					}
+					k++;
+				}
+			}
+			else
+			{
+				t.Text = i + " " + obj.Otostring();
+			}
+			return t;
+		}
+		private void Form1_Paint(object sender, PaintEventArgs e)
 		{
 
 			for (int i = 0; i < storage.GetCount(); i++)
@@ -65,7 +110,7 @@ namespace Laba4OOP
 		}
 
         private void Form1_MouseUp(object sender, MouseEventArgs e)
-        {
+		{
 			for (int i = 0; i < storage.GetCount(); i++)
 			{
 				if (storage.HaveObject(i))
@@ -83,6 +128,7 @@ namespace Laba4OOP
 					Invalidate();
 				}
 			}
+			storage.observers.Invoke(this, null);
 		}
 
         private void btnDelete_Click(object sender, EventArgs e)
@@ -97,10 +143,11 @@ namespace Laba4OOP
 						Invalidate();
 					}
 			}
-        }
+			storage.observers.Invoke(this, null);
+		}
 
         private void Form1_KeyDown(object sender, KeyEventArgs e)
-        {
+		{
 			int object0 = 0;
 
 			for (int i = 0; i < storage.GetCount(); i++)
@@ -256,6 +303,7 @@ namespace Laba4OOP
 				}
 				Invalidate();
 			}
+			storage.observers.Invoke(this, null);
 		}
 
         private void btnGroup_Click(object sender, EventArgs e)
@@ -297,7 +345,9 @@ namespace Laba4OOP
 			}
 			storage.SetObject(numberOfObjects, groupList[groupList.Count - 1], numberOfEveryObject);
 			numberOfObjects++;
+			groupList[groupList.Count - 1].chosen = false;
 			Invalidate();
+			storage.observers.Invoke(this, null);
 		}
 
         private void btnUngroup_Click(object sender, EventArgs e)
@@ -312,13 +362,14 @@ namespace Laba4OOP
             }
 
             for (int i = 0; i < groupList[numberOfGroup].GetLengthOfGroup(); i++)
-            {
+			{
 				storage.SetObject(numberOfObjects, groupList[numberOfGroup].GetObject(i), groupList[numberOfGroup].GetObject(i).numberOfObject);
 				numberOfObjects++;
 			}
 			groupList[numberOfGroup].DeleteGroup();
 			Invalidate();
-        }
+			storage.observers.Invoke(this, null);
+		}
 
         private void btnSave_Click(object sender, EventArgs e)
         {
@@ -332,13 +383,86 @@ namespace Laba4OOP
 			Color col = Color.White;
 			MyFormPaint.Clear(col); // очистка поверхности и заливка ее белым цветом
 			Invalidate();
+			storage.observers.Invoke(this, null);
 		}
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+			storage.observers = new System.EventHandler(this.UpdateFromStorage);
+		}
+
+        private void treeView1_Click(object sender, EventArgs e)
+        {
+            foreach (TreeNode n in treeView1.Nodes)
+            {
+                //recursiveTotalNodes++;
+                if (n.Checked)
+                {
+                    int j = 0;
+                    string s = n.Text;
+                    string x = "";
+                    string y = "";
+                    while (s[j] != ',')
+                    {
+                        j++;
+                    }
+                    j++;
+                    while (s[j] != ',')
+                    {
+                        x += s[j];
+                        j++;
+                    }
+                    j++;
+                    while (s[j] != ')')
+                    {
+                        y += s[j];
+                        j++;
+                    }
+                    storage.SelectByCoords(Int32.Parse(x), Int32.Parse(y));
+                }
+                else
+                {
+					int j = 0;
+					string s = n.Text;
+					string x = "";
+					string y = "";
+					while (s[j] != ',')
+					{
+						j++;
+					}
+					j++;
+					while (s[j] != ',')
+					{
+						x += s[j];
+						j++;
+					}
+					j++;
+					while (s[j] != ')')
+					{
+						y += s[j];
+						j++;
+					}
+					storage.UnselectByCoords(Int32.Parse(x), Int32.Parse(y));
+				}
+
+            }
+            System.Drawing.Graphics MyFormPaint = this.CreateGraphics();
+            Color col = Color.White;
+            MyFormPaint.Clear(col); // очистка поверхности и заливка ее белым цветом
+            Invalidate();
+        }
+
+        private void treeView1_MouseMove(object sender, MouseEventArgs e)
+        {
+			//Invalidate();
+        }
     }
 
     class Storage
 	{
 		private int size;
 		Object[] storage;
+		public System.EventHandler observers;
 
 		Storage()
 		{
@@ -350,6 +474,30 @@ namespace Laba4OOP
 		{
 			this.size = size;
 			storage = new Object[size];
+		}
+		public Object getObjectFromindex(int i)
+		{
+			if (storage[i] != null)
+				return storage[i];
+			return null;
+		}
+		public void SelectByCoords(int x, int y)
+		{
+			for (int i = 0; i < size; i++)
+			{
+				if (storage[i] != null)
+					if ((storage[i].xCoord == x) && (storage[i].yCoord == y))
+						storage[i].chosen = true;
+			}
+		}
+		public void UnselectByCoords(int x, int y)
+		{
+			for (int i = 0; i < size; i++)
+			{
+				if (storage[i] != null)
+					if ((storage[i].xCoord == x) && (storage[i].yCoord == y))
+						storage[i].chosen = false;
+			}
 		}
 
 		//добавить объект к хранилище
@@ -442,18 +590,18 @@ namespace Laba4OOP
 				}
 			}
 			sr.Close(); //закрываем файл
-
 		}
 	}
 
 	//класс группировки для паттерна Composite
 	class Group : Object
 	{
-		Color color = new Color();
+		//Color color = new Color();
 		static Random rand = new Random();
 		int random1 = rand.Next(256);
 		int random2 = rand.Next(256);
 		int random3 = rand.Next(256);
+
 		public Group()
         {
 			color = Color.FromArgb(random1, random2, random3);
@@ -461,7 +609,12 @@ namespace Laba4OOP
 
 		private List<Object> groupObj = new List<Object>();
 
-		public int GetLengthOfGroup()
+		public override string Otostring()
+		{
+			return "Group(" + groupObj.Count + "," + xCoord + "," + yCoord + ") ";
+		}
+
+		public override int GetLengthOfGroup()
         {
 			return groupObj.Count;
         }
@@ -475,8 +628,17 @@ namespace Laba4OOP
         {
 			numberInGroupList = obj.numberInGroupList;
 			groupObj.Add(obj);
+			if (groupObj.Count == 1)
+			{
+				xCoord = obj.xCoord;
+				yCoord = obj.yCoord;
+			}
 			obj.chosen = false;
-		}
+            foreach (Object obj0 in groupObj)
+            {
+                obj0.color = color;
+            }
+        }
 		
 		//рисование круга
 		public override void DrawObject()
@@ -534,10 +696,15 @@ namespace Laba4OOP
 			foreach (Object obj in groupObj)
 			{
 				if (obj.CheckClickOnObject(x, y))
+				{
+					chosen = true;
 					foreach (Object obj2 in groupObj)
 					{
 						obj2.chosen = true;
 					}
+					return;
+				}
+				chosen = false;
 			}
 		}
 
@@ -548,7 +715,6 @@ namespace Laba4OOP
 				if (obj.CheckChosen())
 					return true;
 			}
-
 			return false;
 		}
 
@@ -599,7 +765,7 @@ namespace Laba4OOP
 			}
 		}
 
-		public Object GetObject(int i)
+		public override Object GetObject(int i)
         {
 			return groupObj[i];
         }
@@ -675,12 +841,17 @@ namespace Laba4OOP
 
 		//метка выделенности
 		public bool chosen = false;
+		public Color color = Color.Black;
 
 		//метка окрашенности
 		public bool colored = false;
 
 		//номер объекта
-		public int numberOfObject = 0;
+		public int numberOfObject = 0; 
+		public virtual int GetLengthOfGroup()
+		{
+			return 0;
+		}
 
 		//задать координаты
 		public void SetCoords(int xCoord, int yCoord)
@@ -726,6 +897,11 @@ namespace Laba4OOP
         {
 			if(CheckClickOnObject(x, y))
 				chosen = true;
+        }
+
+		public virtual Object GetObject(int i)
+        {
+			return new Object();
         }
 
 		public virtual void CheckChangeUnchosen()
@@ -796,6 +972,10 @@ namespace Laba4OOP
 				xCoord = 1;
 			xCoord--;
         }
+		virtual public string Otostring()
+		{
+			return "";
+		}
 
 		public virtual void SizeUpObject()
 		{
@@ -833,6 +1013,10 @@ namespace Laba4OOP
 			myPen.Dispose();
 			formGraphics.Dispose();
 		}
+		public override string Otostring()
+		{
+			return "Circle(" + color + "," + xCoord + "," + yCoord + ")";
+		}
 
 		public override void DrawRedObject()
 		{
@@ -849,6 +1033,7 @@ namespace Laba4OOP
 
 		public override void DrawGreenObject()
 		{
+			color = Color.Green;
 			System.Drawing.Pen myPen = new System.Drawing.Pen(System.Drawing.Color.Green);
 			System.Drawing.Graphics formGraphics;
 			formGraphics = Form.ActiveForm.CreateGraphics();
@@ -909,8 +1094,12 @@ namespace Laba4OOP
 			myPen.Dispose();
 			formGraphics.Dispose();
 		}
+		public override string Otostring()
+		{
+			return "Square(" + color + "," + xCoord + "," + yCoord + ")"; ;
+		}
 
-		public override void DrawRedObject()
+	public override void DrawRedObject()
 		{
 			System.Drawing.Pen myPen = new System.Drawing.Pen(System.Drawing.Color.Red);
 			System.Drawing.Graphics formGraphics;
@@ -924,6 +1113,7 @@ namespace Laba4OOP
 		}
 		public override void DrawGreenObject()
 		{
+			color = Color.Green;
 			System.Drawing.Pen myPen = new System.Drawing.Pen(System.Drawing.Color.Green);
 			System.Drawing.Graphics formGraphics;
 			formGraphics = Form.ActiveForm.CreateGraphics();
