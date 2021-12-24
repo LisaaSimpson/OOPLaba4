@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -318,6 +319,20 @@ namespace Laba4OOP
 			groupList[numberOfGroup].DeleteGroup();
 			Invalidate();
         }
+
+        private void btnSave_Click(object sender, EventArgs e)
+        {
+			storage.SaveObjs();
+		}
+
+        private void btnLoad_Click(object sender, EventArgs e)
+        {
+			storage.LoadObjs();
+			System.Drawing.Graphics MyFormPaint = this.CreateGraphics();
+			Color col = Color.White;
+			MyFormPaint.Clear(col); // очистка поверхности и заливка ее белым цветом
+			Invalidate();
+		}
     }
 
     class Storage
@@ -389,17 +404,59 @@ namespace Laba4OOP
 				return false;
 			}
 		}
+		public void SaveObjs() //функция сохранения хранилища в файл
+		{
+
+			string path = @"C:\Users\adeli\source\repos\OOPLaba4\save.txt"; //путь до файла
+			StreamWriter cfile = new StreamWriter(path, false); //создаем записыватель файла
+			cfile.WriteLine(size); //записываем размер хранилища
+			for (int i = 0; i < size; i++)
+			{
+				if (storage[i] != null) //если объект существует
+				{
+					{
+						storage[i].Save(cfile); //сохраняем его
+					}
+				}
+			}
+			cfile.Close();
+		}
+		public void LoadObjs() //выгрузка объектов из файла в хранилище
+		{
+			string path = @"C:\Users\adeli\source\repos\OOPLaba4\save.txt"; ; //путь до файла
+			Factory factory = new Factory(); //factory для создания объектов
+			StreamReader sr = new StreamReader(path); //читатель файла
+			char code;  //код, определяюший тип объекта
+			size = Convert.ToInt32(sr.ReadLine());
+			storage = new Object[100]; //создаем хранилище определенного размера
+			for (int i = 0; i < size; i++)
+			{
+				if (!sr.EndOfStream)
+				{
+					code = Convert.ToChar(sr.ReadLine()); //считываем тип объекта
+					storage[i] = factory.CreateObject(code); //factory создает объект определенного типа
+					if (storage[i] != null)
+					{
+						storage[i].Load(sr); //считываем информацию о объекте из файла
+					}
+				}
+			}
+			sr.Close(); //закрываем файл
+
+		}
 	}
 
 	//класс группировки для паттерна Composite
 	class Group : Object
 	{
-		Color color;
-		Random rand = new Random();
-
+		Color color = new Color();
+		static Random rand = new Random();
+		int random1 = rand.Next(256);
+		int random2 = rand.Next(256);
+		int random3 = rand.Next(256);
 		public Group()
         {
-			color = Color.FromArgb(rand.Next(256), rand.Next(256), rand.Next(256));
+			color = Color.FromArgb(random1, random2, random3);
 		}
 
 		private List<Object> groupObj = new List<Object>();
@@ -569,6 +626,43 @@ namespace Laba4OOP
             }
 			DeleteGroup();
 		}
+		public override void Save(StreamWriter _file) //сохранение объекта
+		{
+			_file.WriteLine("G"); //пишем, что записываемый объект - группа
+			_file.WriteLine(groupObj.Count); //записываем размер группы
+			_file.WriteLine(random1); //записываем rand1 группы
+			_file.WriteLine(random2); //записываем rand2 группы
+			_file.WriteLine(random3); //записываем rand3 группы
+			foreach (Object obj in groupObj)
+            {
+				if (obj != null) //если объект существует
+				{
+					{
+						obj.Save(_file); //сохраняем его
+					}
+				}
+			}
+		}
+		public override void Load(StreamReader _file)
+		{
+			Factory factory = new Factory(); //factory для создания объектов
+			char code;  //код, определяюший тип объекта
+			size = Convert.ToInt32(_file.ReadLine());
+			random1 = Convert.ToInt32(_file.ReadLine());
+			random2 = Convert.ToInt32(_file.ReadLine());
+			random3 = Convert.ToInt32(_file.ReadLine());
+			groupObj = new List<Object>(); //создаем хранилище
+
+			for (int i = 0; i < size; i++)
+			{
+				code = Convert.ToChar(_file.ReadLine()); //считываем тип объекта
+				groupObj.Add(factory.CreateObject(code));
+				if (groupObj[i] != null)
+				{
+					groupObj[i].Load(_file); //считываем информацию о объекте из файла
+				}
+			}
+		}
 	}
 
 	//базовый класс
@@ -712,11 +806,20 @@ namespace Laba4OOP
 		{
 			size--;
 		}
+
+		virtual public void Save(StreamWriter _file) //сохранение объекта в файл
+		{
+
+		}
+
+		virtual public void Load(StreamReader _file) //выгрузка данных об объекте из файла
+		{
+
+		}
 	}
 
 	class CCircle : Object
 	{
-
 		public override void DrawObject()
         {
 			//рисование круга
@@ -769,6 +872,24 @@ namespace Laba4OOP
 
 			myPen.Dispose();
 			formGraphics.Dispose();
+		}
+
+		public override void Save(StreamWriter _file) //сохранение объекта
+		{
+			_file.WriteLine("C"); //пишем, что записываемый объект - круг
+			_file.WriteLine(xCoord); //записываем его данные (координаты,радиус и цвет)
+			_file.WriteLine(yCoord);
+			_file.WriteLine(size);
+			_file.WriteLine(numberOfObject);
+			_file.WriteLine(colored);
+		}
+		public override void Load(StreamReader _file)
+		{
+			xCoord = Convert.ToInt32(_file.ReadLine());
+			yCoord = Convert.ToInt32(_file.ReadLine());
+			size = Convert.ToInt32(_file.ReadLine());
+			numberOfObject = Convert.ToInt32(_file.ReadLine());
+			colored = Convert.ToBoolean(_file.ReadLine());
 		}
 	}
 
@@ -826,6 +947,49 @@ namespace Laba4OOP
 
 			myPen.Dispose();
 			formGraphics.Dispose();
+		}
+		
+		public override void Save(StreamWriter _file) //сохранение объекта
+		{
+			_file.WriteLine("R"); //пишем, что записываемый объект - квадрат
+			_file.WriteLine(xCoord); //записываем его данные
+			_file.WriteLine(yCoord);
+			_file.WriteLine(size);
+			_file.WriteLine(numberOfObject);
+			_file.WriteLine(colored);
+		}
+		public override void Load(StreamReader _file)
+		{
+			xCoord = Convert.ToInt32(_file.ReadLine());
+			yCoord = Convert.ToInt32(_file.ReadLine());
+			size = Convert.ToInt32(_file.ReadLine());
+			numberOfObject = Convert.ToInt32(_file.ReadLine());
+			colored = Convert.ToBoolean(_file.ReadLine());
+
+		}
+	}
+
+	class Factory
+    {
+		public Object CreateObject(char code)
+		{
+			Object obj = null;
+			switch (code)
+			{
+				case 'C':
+					obj = new CCircle();
+					break;
+				case 'R':
+					obj = new CSquare();
+					break;
+				case 'G':
+					obj = new Group();
+					break;
+				default:
+					break;
+
+			}
+			return obj;
 		}
 	}
 }
