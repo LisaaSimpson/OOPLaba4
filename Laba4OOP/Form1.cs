@@ -244,10 +244,24 @@ namespace Laba4OOP
 				for (int i = 0; i < storage.GetCount(); i++)
 				{
 					if (storage.HaveObject(i))
-						if (storage.GetObject(i).CheckChosen())
+					{
+						if (storage.GetObject(i).isclayed)
+						{
+							storage.GetObject(i).LeftObject();
+							for (int j = 0; j < storage.GetCount(); j++)
+                            {
+								if(storage.HaveObject(j) && !storage.GetObject(j).isclayed)
+									if(storage.GetObject(j).isclayed || (((storage.GetObject(j).xCoord - storage.GetObject(j).size) < storage.GetObject(i).xCoord) && ((storage.GetObject(j).xCoord + storage.GetObject(j).size) > storage.GetObject(i).xCoord) && ((storage.GetObject(j).yCoord - storage.GetObject(i).size - storage.GetObject(i).size) < storage.GetObject(i).yCoord) && ((storage.GetObject(j).yCoord + storage.GetObject(i).size) > storage.GetObject(i).yCoord)))
+									{
+										storage.GetObject(j).isclayed = true;
+									}
+                            }
+						}
+						else if (storage.GetObject(i).CheckChosen())
 						{
 							storage.GetObject(i).LeftObject();
 						}
+					}
 				}
 				Invalidate();
 			}
@@ -256,11 +270,24 @@ namespace Laba4OOP
 			{
 				for (int i = 0; i < storage.GetCount(); i++)
 				{
-					if (storage.HaveObject(i))
-						if (storage.GetObject(i).CheckChosen())
+					if (storage.HaveObject(i)) {
+						if (storage.GetObject(i).isclayed)
+						{
+							storage.GetObject(i).RightObject();
+							for (int j = 0; j < storage.GetCount(); j++)
+							{
+								if (storage.HaveObject(j) && !storage.GetObject(j).isclayed)
+									if (storage.GetObject(j).isclayed || (((storage.GetObject(j).xCoord - storage.GetObject(j).size) < storage.GetObject(i).xCoord) && ((storage.GetObject(j).xCoord + storage.GetObject(j).size) > storage.GetObject(i).xCoord) && ((storage.GetObject(j).yCoord - storage.GetObject(i).size - storage.GetObject(i).size) < storage.GetObject(i).yCoord) && ((storage.GetObject(j).yCoord + storage.GetObject(i).size) > storage.GetObject(i).yCoord)))
+									{
+										storage.GetObject(j).isclayed = true;
+									}
+							}
+						}
+						else if (storage.GetObject(i).CheckChosen())
 						{
 							storage.GetObject(i).RightObject();
 						}
+					}
 				}
 				Invalidate();
 			}
@@ -270,10 +297,24 @@ namespace Laba4OOP
 				for (int i = 0; i < storage.GetCount(); i++)
 				{
 					if (storage.HaveObject(i))
-						if (storage.GetObject(i).CheckChosen())
+                    {
+						if (storage.GetObject(i).isclayed)
+						{
+							storage.GetObject(i).DownObject();
+							for (int j = 0; j < storage.GetCount(); j++)
+							{
+								if (storage.HaveObject(j) && !storage.GetObject(j).isclayed)
+									if (storage.GetObject(j).isclayed || (((storage.GetObject(j).xCoord - storage.GetObject(j).size) < storage.GetObject(i).xCoord) && ((storage.GetObject(j).xCoord + storage.GetObject(j).size) > storage.GetObject(i).xCoord) && ((storage.GetObject(j).yCoord - storage.GetObject(i).size - storage.GetObject(i).size) < storage.GetObject(i).yCoord) && ((storage.GetObject(j).yCoord + storage.GetObject(i).size) > storage.GetObject(i).yCoord)))
+									{
+										storage.GetObject(j).isclayed = true;
+									}
+							}
+						}
+						else if (storage.GetObject(i).CheckChosen())
 						{
 							storage.GetObject(i).DownObject();
 						}
+					}
 				}
 				Invalidate();
 			}
@@ -283,10 +324,24 @@ namespace Laba4OOP
 				for (int i = 0; i < storage.GetCount(); i++)
 				{
 					if (storage.HaveObject(i))
-						if (storage.GetObject(i).CheckChosen())
+                    {
+						if (storage.GetObject(i).isclayed)
+						{
+							storage.GetObject(i).UpObject();
+							for (int j = 0; j < storage.GetCount(); j++)
+							{
+								if (storage.HaveObject(j) && !storage.GetObject(j).isclayed)
+									if (storage.GetObject(j).isclayed || (((storage.GetObject(j).xCoord - storage.GetObject(j).size) < storage.GetObject(i).xCoord) && ((storage.GetObject(j).xCoord + storage.GetObject(j).size) > storage.GetObject(i).xCoord) && ((storage.GetObject(j).yCoord - storage.GetObject(i).size - storage.GetObject(i).size) < storage.GetObject(i).yCoord) && ((storage.GetObject(j).yCoord + storage.GetObject(i).size) > storage.GetObject(i).yCoord)))
+									{
+										storage.GetObject(j).isclayed = true;
+									}
+							}
+						}
+						else if (storage.GetObject(i).CheckChosen())
 						{
 							storage.GetObject(i).UpObject();
 						}
+					}
 				}
 				Invalidate();
 			}
@@ -456,9 +511,129 @@ namespace Laba4OOP
         {
 			//Invalidate();
         }
-    }
 
-    class Storage
+        private void btnLip_Click(object sender, EventArgs e)
+        {
+            for (int i = 0; i < storage.GetCount(); i++)
+            {
+				if (storage.HaveObject(i) && storage.GetObject(i).chosen)
+				{
+					storage.GetObject(i).isclayed = true;
+					storage.GetObject(i).Selectclayed(storage.GetObject(i));
+				}
+            }
+        }
+    }
+	class Clayed : Object
+	{
+		public Clayed()
+		{
+			isclayed = true;
+		}
+		override public void Save(StreamWriter _file) //сохранение объекта в файл
+		{
+			_file.WriteLine("L"); //пишем, что записываемый объект - липкий
+			clayed.Save(_file); //сохраняем его
+		}
+		override public void Load(StreamReader _file) //выгрузка данных об объекте из файла
+		{
+			Factory factory = new Factory(); //factory для создания объектов
+			char code;  //код, определяюший тип объекта
+			code = Convert.ToChar(_file.ReadLine()); //считываем тип объекта
+			clayed = factory.CreateObject(code); //factory создает объект определенного типа
+			if (clayed != null)
+			{
+				clayed.Load(_file); //считываем информацию о объекте из файла
+			}
+		}
+		override public string Otostring()
+		{
+			return "Clayed" + clayed.Otostring();
+		}
+		public override void UpObject()
+		{
+			if (yCoord >= Form.ActiveForm.ClientSize.Height - size - 2)
+				yCoord = Form.ActiveForm.ClientSize.Height - size - 2;
+			yCoord++;
+		}
+
+		public override void DownObject()
+		{
+			if (yCoord <= 1)
+				yCoord = 1;
+			yCoord--;
+		}
+
+		public override void RightObject()
+		{
+			if (xCoord >= Form.ActiveForm.ClientSize.Width - size - 2)
+				xCoord = Form.ActiveForm.ClientSize.Width - size - 2;
+			xCoord++;
+		}
+
+		public override void LeftObject()
+		{
+			if (xCoord <= 1)
+				xCoord = 1;
+			xCoord--;
+		}
+
+		public override void DrawObject()
+		{
+			//рисование круга
+			System.Drawing.Pen myPen = new System.Drawing.Pen(System.Drawing.Color.Black);
+			System.Drawing.Graphics formGraphics;
+			formGraphics = Form.ActiveForm.CreateGraphics();
+			Rectangle ellipse = new Rectangle(xCoord, yCoord, size, size);
+			formGraphics.DrawEllipse(myPen, ellipse);
+			DrawNumber(this.numberOfObject);
+
+			myPen.Dispose();
+			formGraphics.Dispose();
+		}
+
+		public override void DrawRedObject()
+		{
+			System.Drawing.Pen myPen = new System.Drawing.Pen(System.Drawing.Color.Red);
+			System.Drawing.Graphics formGraphics;
+			formGraphics = Form.ActiveForm.CreateGraphics();
+			Rectangle ellipse = new Rectangle(xCoord, yCoord, size, size);
+			formGraphics.DrawEllipse(myPen, ellipse);
+			DrawNumber(this.numberOfObject);
+
+			myPen.Dispose();
+			formGraphics.Dispose();
+		}
+
+		public override void DrawGreenObject()
+		{
+			color = Color.Green;
+			System.Drawing.Pen myPen = new System.Drawing.Pen(System.Drawing.Color.Green);
+			System.Drawing.Graphics formGraphics;
+			formGraphics = Form.ActiveForm.CreateGraphics();
+			Rectangle ellipse = new Rectangle(xCoord, yCoord, size, size);
+			formGraphics.DrawEllipse(myPen, ellipse);
+			DrawNumber(this.numberOfObject);
+
+			myPen.Dispose();
+			formGraphics.Dispose();
+		}
+
+		public override void DeleteObject()
+		{
+			chosen = false;
+			System.Drawing.Pen myPen = new System.Drawing.Pen(System.Drawing.Color.White);
+			System.Drawing.Graphics formGraphics;
+			formGraphics = Form.ActiveForm.CreateGraphics();
+			Rectangle ellipse = new Rectangle(xCoord, yCoord, size, size);
+			formGraphics.DrawEllipse(myPen, ellipse);
+			DeleteNumber(this.numberOfObject);
+
+			myPen.Dispose();
+			formGraphics.Dispose();
+		}
+	}
+	class Storage
 	{
 		private int size;
 		Object[] storage;
@@ -841,10 +1016,18 @@ namespace Laba4OOP
 
 		//метка выделенности
 		public bool chosen = false;
+		public bool isclayed = false;
 		public Color color = Color.Black;
 
 		//метка окрашенности
 		public bool colored = false;
+		public void Selectclayed(Object a)
+		{
+			clayed = a;
+			xCoord = clayed.xCoord;
+			yCoord = clayed.yCoord;
+		}
+		public Object clayed = null;
 
 		//номер объекта
 		public int numberOfObject = 0; 
@@ -1174,6 +1357,9 @@ namespace Laba4OOP
 					break;
 				case 'G':
 					obj = new Group();
+					break;
+				case 'L':
+					obj = new Clayed();
 					break;
 				default:
 					break;
